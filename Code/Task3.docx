@@ -1,0 +1,126 @@
+import pandas as pd
+import numpy as np
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+
+
+from google.colab import files
+uploaded = files.upload()
+
+
+df = pd.read_csv("Student_Satisfaction_Survey.csv", encoding="latin1")
+df.head()
+
+
+print(df.columns.tolist())
+
+
+df = df.rename(columns={
+    'Average/ Percentage': 'Avg_Percentage'
+})
+
+
+df['Avg_Score'] = (
+    df['Avg_Percentage']
+    .astype(str)
+    .str.split('/')
+    .str[0]
+    .astype(float)
+)
+
+
+df[['W1', 'W2', 'W3', 'W4', 'W5', 'Avg_Score']].head()
+
+
+
+X = df[['W1', 'W2', 'W3', 'W4', 'W5']]
+y = df['Avg_Score']
+
+from sklearn.model_selection import train_test_split
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+
+from sklearn.ensemble import RandomForestRegressor
+
+model = RandomForestRegressor(
+    n_estimators=200,
+    random_state=42
+)
+
+model.fit(X_train, y_train)
+
+
+
+
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+import numpy as np
+
+y_pred = model.predict(X_test)
+
+print("MAE:", mean_absolute_error(y_test, y_pred))
+print("RMSE:", np.sqrt(mean_squared_error(y_test, y_pred)))
+print("R² Score:", r2_score(y_test, y_pred))
+
+
+
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+importance = model.feature_importances_
+
+imp_df = pd.DataFrame({
+    'Rating Weightage': X.columns,
+    'Importance': importance
+}).sort_values(by='Importance', ascending=False)
+
+imp_df
+
+
+
+plt.figure(figsize=(6,4))
+sns.barplot(x='Importance', y='Rating Weightage', data=imp_df)
+plt.title("Feature Importance – Factors Influencing Satisfaction Score")
+plt.show()
+
+
+
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import confusion_matrix, classification_report, accuracy_score
+
+X = df[['W1', 'W2', 'W3', 'W4', 'W5']]
+y = df['Satisfaction_Level']
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)
+
+clf = RandomForestClassifier(n_estimators=200, random_state=42)
+clf.fit(X_train, y_train)
+
+y_pred = clf.predict(X_test)
+
+
+print("Accuracy:", accuracy_score(y_test, y_pred))
+print("\nClassification Report:\n")
+print(classification_report(y_test, y_pred))
+
+cm = confusion_matrix(y_test, y_pred)
+
+plt.figure(figsize=(5,4))
+sns.heatmap(cm, annot=True, fmt='d', cmap='Purples')
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plt.title("Confusion Matrix – Satisfaction Classification")
+plt.show()
+
+
